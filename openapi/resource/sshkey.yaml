@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us SSH Key API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/sshkey
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listSshKeys
+      summary: List SSH keys
+      description: List SSH keys for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of SSH keys, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of SSH keys to fetch
+      responses:
+        "200":
+          description: SSH keys data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getSshKey
+      summary: Get SSH key data
+      description: Get SSH key data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the SSH key
+      responses:
+        "200":
+          description: SSH key data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: SSH key not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    SshKey:
+      description: SSH Key
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the SSH key
+            publicKey:
+              type: string
+              description: Public key of the SSH key
+            fingerprint:
+              type: string
+              description: Fingerprint of the SSH key
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the SSH key
+          required:
+            - name
+            - publicKey

@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us REST API specification
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ProviderId:
+      type: string
+      description: Provider identifier
+      enum:
+        - akamai
+        - aws
+        - digitalocean
+    Metadata:
+      type: object
+      description: Metadata of the request
+      properties:
+        uid:
+          type: string
+          description: Unique identifier of the request
+        timestamp:
+          type: number
+          description: Timestamp of the request, in seconds since epoch
+      required:
+        - uid
+        - timestamp
+    Response:
+      type: object
+      description: Response with metadata
+      properties:
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+      required:
+        - metadata
+    EmptyResponse:
+      description: Empty response
+      allOf:
+        - $ref: "#/components/schemas/Response"
+    ErrorResponse:
+      description: Error response
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: Error details
+          required:
+            - reason
+    ResourceResponse:
+      description: Response with resource
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            resource:
+              $ref: "./resource.yaml#/components/schemas/Resource"
+          required:
+            - resource
+    PagedResourceResponse:
+      description: Response with paged resources
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            resources:
+              type: array
+              items:
+                $ref: "./resource.yaml#/components/schemas/Resource"
+            nextToken:
+              type: string
+              description: Token for the next page, if there are more resources
+          required:
+            - resources
+    StaticDataResponse:
+      description: Response with API server static data
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            staticData:
+              $ref: "./staticdata.yaml#/components/schemas/StaticData"
+          required:
+            - staticData
+    ProviderStaticDataResponse:
+      description: Response with provider static data
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            staticData:
+              $ref: "./staticdata.yaml#/components/schemas/ProviderStaticData"
+          required:
+            - staticData
+    OAuthTokenResponse:
+      description: Response with OAuth token
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: OAuth access token
+        refresh_token:
+          type: string
+          description: OAuth refresh token
+        expires_in:
+          type: number
+          description: OAuth access token expiration time, in seconds
+      required:
+        - access_token
+        - refresh_token
+        - expires_in

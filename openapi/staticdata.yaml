@@ -1,0 +1,176 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Static Data API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/staticdata
+    description: Kopernik.us API server
+paths:
+  /:
+    get:
+      operationId: getStaticData
+      summary: Get static data of the API server
+      description: Get static data of the API server
+      responses:
+        "200":
+          description: Static data of the API server
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/StaticDataResponse"
+  /{providerUid}:
+    get:
+      operationId: getProviderStaticData
+      summary: Get provider static data
+      description: Get provider descriptive static data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "./rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      responses:
+        "200":
+          description: Provider static data
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/ProviderStaticDataResponse"
+components:
+  schemas:
+    StaticData:
+      description: Static data of the API server
+      type: object
+      properties:
+        maxAccounts:
+          type: number
+          description: Maximum number of accounts for Web application use
+      required:
+        - maxAccounts
+    ProviderStaticData:
+      description: Provider descriptive static data
+      type: object
+      properties:
+        uid:
+          description: Unique identifier of the provider
+          $ref: "./rest.yaml#/components/schemas/ProviderId"
+        name:
+          type: string
+          description: Name of the provider, as displayed to the user
+        regionalAuth:
+          type: boolean
+          description: Whether the provider authentication requires region selection (true) or is global (false)
+        anonymousResources:
+          type: array
+          items:
+            $ref: "./resource.yaml#/components/schemas/ResourceType"
+          description: List of resource types that can be accessed anonymously
+        limits:
+          type: object
+          description: Limits of the provider
+          properties:
+            service:
+              type: object
+              description: Limits of the provider by service
+              properties:
+                blockstorage:
+                  type: object
+                  description: Limits of the Block Storage support by the provider
+                  properties:
+                    namePattern:
+                      type: string
+                      description: Javascript regex of allowed block storage names, if Block Storage names are supported
+                    volumeSize:
+                      type: object
+                      description: Limits of the Block Storage volume size
+                      properties:
+                        min:
+                          type: number
+                          description: Minimum volume size in GB
+                        max:
+                          type: number
+                          description: Maximum volume size in GB
+                      required:
+                        - min
+                        - max
+                  required:
+                    - volumeSize
+                machine:
+                  type: object
+                  description: Limits of the Machine support by the provider
+                  properties:
+                    namePattern:
+                      type: string
+                      description: Javascript regex of allowed machine names, if Machine names are supported
+                    requiresVpc:
+                      type: boolean
+                      description: Whether Machines must be created in a VPC
+                    maxVolumes:
+                      type: number
+                      description: Maximum number of volumes that can be attached to a Machine
+                    minRootDiskGb:
+                      type: number
+                      description: Minimum allowed root disk size in GB
+                  required:
+                    - requiresVpc
+                    - maxVolumes
+                    - minRootDiskGb
+                region:
+                  type: object
+                  description: Limits of the Region support by the provider
+                  properties:
+                    hasAvailabilityZones:
+                      type: boolean
+                      description: Whether the provider has multiple availability zones per region
+                  required:
+                    - hasAvailabilityZones
+                tag:
+                  type: object
+                  description: Limits of the Tag support by the provider
+                  properties:
+                    namePattern:
+                      type: string
+                      description: Javascript regex of allowed tag names, if Tag names are supported
+                  required: []
+                vpc:
+                  type: object
+                  description: Limits of the VPC support by the provider
+                  properties:
+                    cidrBlock:
+                      description: Whether the provider supports CIDR blocks at VPC level
+                      type: string
+                      enum:
+                        - not_supported
+                        - required
+                    namePattern:
+                      type: string
+                      description: Javascript regex of allowed VPC names, if VPC names are supported
+                    subnet:
+                      type: object
+                      description: Limits of the VPC Subnet support by the provider
+                      properties:
+                        namePattern:
+                          type: string
+                          description: Javascript regex of allowed Subnet names, if Subnet names are supported
+                        maxSubnets:
+                          type: number
+                          description: Maximum number of Subnets that can be created in a VPC
+                      required:
+                        - maxSubnets
+                  required:
+                    - cidrBlock
+                    - subnet
+              required:
+                - blockstorage
+                - machine
+                - region
+                - tag
+                - vpc
+          required:
+            - service
+      required:
+        - uid
+        - name
+        - regionalAuth
+        - limits

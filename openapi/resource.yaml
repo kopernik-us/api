@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Resource API specification
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ResourceType:
+      type: string
+      description: Type of the cloud resource
+      enum:
+        - account
+        - blockstorage
+        - firewall
+        - image
+        - kubernetes
+        - machine
+        - machinetype
+        - region
+        - sshkey
+        - vpc
+    Resource:
+      type: object
+      description: Cloud resource instance
+      properties:
+        type:
+          description: Type of the cloud resource instance
+          $ref: "#/components/schemas/ResourceType"
+        providerUid:
+          description: Cloud provider identifier
+          $ref: "./rest.yaml#/components/schemas/ProviderId"
+        regionUid:
+          type: string
+          description: Cloud region identifier; if not specified, the resource is global
+        accountUid:
+          type: string
+          description: Cloud account identifier; if not specified, the resource is global
+        uid:
+          type: string
+          description: Unique identifier of the cloud resource instance
+        grid:
+          type: string
+          description: >
+            Globally unique identifier of the cloud resource instance;
+            Format: `grid:<providerUid>:<type>:[regionUid]:[accountUid]:<uid>`
+      required:
+        - type
+        - providerUid
+        - uid
+        - grid

@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Kubernetes API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/kubernetes
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listKubernetesClusters
+      summary: List Kubernetes clusters
+      description: List Kubernetes clusters for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of Kubernetes clusters, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of Kubernetes clusters to fetch
+      responses:
+        "200":
+          description: Kubernetes clusters data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getKubernetesCluster
+      summary: Get Kubernetes cluster data
+      description: Get Kubernetes cluster data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the Kubernetes cluster
+      responses:
+        "200":
+          description: Kubernetes cluster data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Kubernetes cluster not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Kubernetes:
+      description: Kubernetes cluster
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the Kubernetes cluster
+            version:
+              type: string
+              description: Version of the Kubernetes
+            vpcUid:
+              type: string
+              description: ID of the VPC the Kubernetes cluster is associated with; empty for non-VPC clusters
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the Kubernetes cluster
+          required:
+            - name
+            - version

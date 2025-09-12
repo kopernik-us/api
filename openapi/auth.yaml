@@ -1,0 +1,223 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Auth API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/auth
+    description: Kopernik.us API server
+paths:
+  /authorize/{providerUid}:
+    post:
+      operationId: authorizeAuthentication
+      summary: Validate authentication token and return authentication object
+      description: Validate authentication token and return authentication object
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "./rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalAccessTokenExchange"
+      responses:
+        "200":
+          description: Authentication validated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/ErrorResponse"
+  /register/{providerUid}:
+    post:
+      operationId: registerAuthentication
+      summary: Register a new authentication for a provider by adding new cookie
+      description: Register a new authentication for a provider by adding new cookie to the browser
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "./rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalAccessTokenExchange"
+      responses:
+        "200":
+          description: Authentication registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/ErrorResponse"
+  /exchange/{providerUid}:
+    post:
+      operationId: exchangeAuthentication
+      summary: Exchange OAuth code for authentication object and register new cookie
+      description: Exchange OAuth code for authentication object and register new cookie to the browser
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "./rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthCodeExchange"
+      responses:
+        "200":
+          description: Authentication exchanged and cookie registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/ErrorResponse"
+  /refresh/{providerUid}:
+    post:
+      operationId: refreshAuthentication
+      summary: Refresh OAuth access token and return new authentication object and new cookie
+      description: Refresh OAuth access token and return new authentication object and new cookie to the browser
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "./rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      responses:
+        "200":
+          description: OAuth access token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "./rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    AuthType:
+      type: string
+      description: Type of the authentication
+      enum:
+        - token
+        - oauth
+    AuthRole:
+      type: string
+      description: Role of the authentication scope
+      enum:
+        - admin
+        - readonly
+    Auth:
+      type: object
+      description: Request authentication parameters
+      properties:
+        providerUid:
+          description: Cloud provider identifier
+          $ref: "./rest.yaml#/components/schemas/ProviderId"
+        accountUid:
+          type: string
+          description: User account identifier issued by the provider
+        type:
+          description: Type of the authentication
+          $ref: "#/components/schemas/AuthType"
+        token:
+          description: Authentication token
+          $ref: "#/components/schemas/SecretAccessToken"
+        regionUid:
+          type: string
+          description: For providers with regional API access (AWS), the region scope identifier
+        role:
+          description: Role of the authentication scope
+          $ref: "#/components/schemas/AuthRole"
+      required:
+        - providerUid
+        - accountUid
+        - type
+        - token
+    AuthResponse:
+      description: Response with authentication token to be used in subsequent requests in the Authorization header
+      allOf:
+        - $ref: "./rest.yaml#/components/schemas/Response"
+        - type: object
+          properties:
+            signedAuth:
+              type: string
+              description: |
+                Authentication token to be used in the Authorization header; usage: `Authorization: Bearer <signedAuth>`
+          required:
+            - signedAuth
+    OAuthCodeExchange:
+      type: object
+      description: Request to exchange OAuth code for Authentication object
+      properties:
+        code:
+          type: string
+          description: OAuth code to exchange for Authentication object
+        role:
+          description: Role of the authentication scope
+          $ref: "#/components/schemas/AuthRole"
+        regionUid:
+          type: string
+          description: For providers with regional API access (AWS), the region scope identifier
+      required:
+        - code
+        - role
+    PersonalAccessTokenExchange:
+      type: object
+      description: Request to register a personal access token and get an Authentication object
+      properties:
+        accessToken:
+          type: string
+          description: Personal access token to register
+        role:
+          description: Role of the authentication scope
+          $ref: "#/components/schemas/AuthRole"
+        regionUid:
+          type: string
+          description: For providers with regional API access (AWS), the region scope identifier
+      required:
+        - accessToken
+        - role
+    SecretAccessToken:
+      type: object
+      description: Secret access token for the provider API
+      properties:
+        access_token:
+          type: string
+          description: Token to access the provider API, either API key or OAuth access token
+        refresh_token:
+          type: string
+          description: For OAuth, the refresh token to get a new access token
+        expiresAt:
+          type: number
+          description: For OAuth, the expiration time of the access token, in seconds since epoch
+      required:
+        - access_token

@@ -1,0 +1,191 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Firewall API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/firewall
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listFirewalls
+      summary: List firewalls
+      description: List firewalls for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of firewalls, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of firewalls to fetch
+      responses:
+        "200":
+          description: Firewalls data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getFirewall
+      summary: Get firewall data
+      description: Get firewall data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the firewall
+      responses:
+        "200":
+          description: Firewall data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Firewall not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Action:
+      type: string
+      description: Action to take for the rule
+      enum:
+        - allow
+        - deny
+    FirewallRule:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the rule
+        description:
+          type: string
+          description: Description of the rule
+        protocol:
+          $ref: "#/components/schemas/Protocol"
+        policy:
+          $ref: "#/components/schemas/Action"
+        ports:
+          type: string
+          description: Ports for the rule, e.g. "80,443" or range "1024-65535"
+        peers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Peer"
+          description: Peers for the rule
+      required:
+        - protocol
+        - policy
+        - ports
+        - peers
+    Firewall:
+      description: Firewall
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the firewall
+            status:
+              type: string
+              description: Status of the firewall
+            vpcUid:
+              type: string
+              description: ID of the VPC the firewall is associated with; empty for non-VPC firewalls
+            inboundRules:
+              description: Rules for incoming traffic
+              type: array
+              items:
+                $ref: "#/components/schemas/FirewallRule"
+            outboundRules:
+              description: Rules for outgoing traffic
+              type: array
+              items:
+                $ref: "#/components/schemas/FirewallRule"
+            defaultInboundPolicy:
+              description: Default inbound policy for the firewall
+              $ref: "#/components/schemas/Action"
+            defaultOutboundPolicy:
+              description: Default outbound policy for the firewall
+              $ref: "#/components/schemas/Action"
+            tags:
+              description: Tags of the firewall
+              type: array
+              items:
+                type: string
+    Peer:
+      description: Peer for the rule
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/PeerType"
+        uids:
+          description: Peer identifiers
+          type: array
+          items:
+            type: string
+      required:
+        - type
+        - uids
+    PeerType:
+      type: string
+      description: Type of the peer
+      enum:
+        - addressIpv4
+        - addressIpv6
+        - machine
+        - loadBalancer
+        - kubernetes
+    Protocol:
+      type: string
+      description: Protocol for the rule
+      enum:
+        - tcp
+        - udp
+        - icmp
+        - icmpv6
+        - ipencap
+        - all

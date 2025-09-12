@@ -1,0 +1,256 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Machine API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/machine
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listMachines
+      summary: List machines
+      description: List machines for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of machines, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of machines to fetch
+      responses:
+        "200":
+          description: Machines data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    post:
+      operationId: createMachine
+      summary: Create a new machine
+      description: Create a new machine for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MachineCreate"
+      responses:
+        "200":
+          description: Machine created
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getMachine
+      summary: Get machine data
+      description: Get machine data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the machine
+      responses:
+        "200":
+          description: Machine data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMachine
+      summary: Delete machine
+      description: Delete machine
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the machine to delete
+      responses:
+        "200":
+          description: Machine deleted
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/EmptyResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Machine not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Machine:
+      description: Machine
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            machineTypeUid:
+              type: string
+              description: ID of the hardware configuration
+            name:
+              type: string
+              description: Name of the machine
+            status:
+              type: string
+              description: Status of the machine
+            ipv4:
+              description: IPv4 addresses of the machine
+              type: array
+              items:
+                $ref: "#/components/schemas/NetworkAddress"
+            ipv6:
+              description: IPv6 addresses of the machine
+              type: array
+              items:
+                $ref: "#/components/schemas/NetworkAddress"
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the machine
+          required:
+            - machineTypeUid
+            - name
+    NetworkAddress:
+      description: Network address
+      type: object
+      properties:
+        address:
+          type: string
+          description: Host address
+        netmask:
+          type: string
+          description: Netmask address
+        gateway:
+          type: string
+          description: Gateway address
+        scope:
+          type: string
+          description: Scope of the address
+          enum:
+            - public
+            - private
+      required:
+        - address
+    MachineCreate:
+      type: object
+      description: Request to create a new machine
+      properties:
+        regionUid:
+          type: string
+          description: Region identifier where the machine will be created
+        imageUid:
+          type: string
+          description: Image identifier for the machine operating system
+        machineTypeUid:
+          type: string
+          description: Machine type identifier specifying hardware configuration
+        name:
+          type: string
+          description: Name of the machine
+        firewallUid:
+          type: string
+          description: Firewall identifier to associate with the machine
+        vpcUid:
+          type: string
+          description: VPC identifier to place the machine in
+        vpcSubnetUid:
+          type: string
+          description: VPC subnet identifier for the machine
+        userData:
+          type: string
+          description: User data script to run on machine initialization
+        authorizedKeyUids:
+          type: array
+          items:
+            type: string
+          description: SSH key identifiers to authorize for the machine
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for the machine
+        volumes:
+          type: array
+          items:
+            $ref: "../blockstorage.yaml#/components/schemas/BlockStorageCreate"
+          description: Additional block storage volumes to attach to the machine
+      required:
+        - regionUid
+        - imageUid
+        - machineTypeUid

@@ -1,0 +1,102 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Account API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/account
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listAccounts
+      summary: List accounts for which authentication was provided
+      description: List accounts for which authentication was provided
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of accounts, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of accounts to fetch
+      responses:
+        "200":
+          description: Accounts data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{accountUid}:
+    get:
+      operationId: getAccount
+      summary: Get account data
+      description: Get account data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: accountUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the account issued by the provider
+      responses:
+        "200":
+          description: Account data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Account:
+      description: Cloud provider account data
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name associated with the account, or account identifier issued by the provider
+            email:
+              type: string
+              description: Email of the account, if available

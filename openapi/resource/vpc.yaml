@@ -1,0 +1,253 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us VPC API specification
+  version: 0.1.0
+  description: |
+    This API provides operations for managing Virtual Private Clouds (VPCs) 
+    across different cloud providers. You can create, list, retrieve, and 
+    delete VPCs, as well as manage their subnets and configurations.
+servers:
+  - url: https://api.kopernik.us/v0/resource/vpc
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listVpcs
+      summary: List VPCs
+      description: List VPCs for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of VPCs, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of VPCs to fetch
+      responses:
+        "200":
+          description: VPCs data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    post:
+      operationId: createVpc
+      summary: Create a new VPC
+      description: Create a new VPC for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VpcCreate"
+      responses:
+        "200":
+          description: VPC created
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getVpc
+      summary: Get VPC data
+      description: Get VPC data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the VPC
+      responses:
+        "200":
+          description: VPC data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: VPC not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteVpc
+      summary: Delete VPC
+      description: Delete VPC
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the VPC to delete
+      responses:
+        "200":
+          description: VPC deleted
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/EmptyResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: VPC not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Vpc:
+      description: VPC
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the VPC
+            description:
+              type: string
+              description: Description of the VPC
+            cidrBlock:
+              type: string
+              description: |
+                CIDR block of the VPC; for providers that do not support CIDR blocks at VPC level, this field is set
+                to the address with least possible scope to include all VPC subnets
+            subnets:
+              type: array
+              items:
+                $ref: "#/components/schemas/Subnet"
+              description: Subnets of the VPC
+            default:
+              type: boolean
+              description: Whether the VPC is the default VPC in its region
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the VPC
+          required:
+            - name
+            - cidrBlock
+            - subnets
+            - default
+    Subnet:
+      description: Subnet
+      type: object
+      properties:
+        uid:
+          type: string
+          description: Unique identifier of the subnet
+        name:
+          type: string
+          description: Name of the subnet
+        address:
+          type: string
+          description: Address of the subnet (CIDR block)
+      required:
+        - uid
+        - name
+        - address
+    VpcCreate:
+      type: object
+      description: Request to create a new VPC
+      properties:
+        name:
+          type: string
+          description: Name of the VPC
+        regionUid:
+          type: string
+          description: Region identifier where the VPC will be created
+        description:
+          type: string
+          description: Description of the VPC
+        cidrBlock:
+          type: string
+          description: CIDR block for the VPC
+        subnets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubnetCreate"
+          description: Subnets to create within the VPC
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for the VPC
+      required:
+        - name
+        - regionUid
+    SubnetCreate:
+      type: object
+      description: Request to create a new subnet within a VPC
+      properties:
+        name:
+          type: string
+          description: Name of the subnet
+        address:
+          type: string
+          description: CIDR block for the subnet
+      required:
+        - name
+        - address

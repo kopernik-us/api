@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Machine Type API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/machinetype
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listMachineTypes
+      summary: List machine types
+      description: List machine types for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of machine types, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of machine types to fetch
+      responses:
+        "200":
+          description: Machine types data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getMachineType
+      summary: Get machine type data
+      description: Get machine type data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the machine type
+      responses:
+        "200":
+          description: Machine type data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Machine type not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    MachineType:
+      description: Machine type
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            cpus:
+              type: number
+              description: Number of CPUs
+            gpus:
+              type: number
+              description: Number of GPUs
+            memoryGb:
+              type: number
+              description: Memory in gigabytes
+            diskGb:
+              type: number
+              description: Disk in gigabytes
+            available:
+              type: boolean
+              description: Whether the machine type is available for new machines
+            transferGb:
+              type: number
+              description: Free-of-charge transfer allowance for new machines of this type, in gigabytes
+            supportedArchitectures:
+              description: Supported architectures for the machine type
+              type: array
+              items:
+                type: string
+            supportedRegions:
+              description: For regional machine types, the regions where the machine type is available
+              type: array
+              items:
+                type: string
+          required:
+            - cpus
+            - gpus
+            - memoryGb
+            - diskGb
+            - available
+            - transferGb
+            - supportedArchitectures

@@ -1,0 +1,210 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Block Storage API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/blockstorage
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listBlockStorageVolumes
+      summary: List block storage volumes
+      description: List block storage volumes for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of volumes, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of volumes to fetch
+      responses:
+        "200":
+          description: Block storage volumes data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    post:
+      operationId: createBlockStorageVolume
+      summary: Create a new block storage volume
+      description: Create a new block storage volume for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockStorageCreate"
+      responses:
+        "200":
+          description: Block storage volume created
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getBlockStorageVolume
+      summary: Get block storage volume data
+      description: Get block storage volume data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the block storage volume
+      responses:
+        "200":
+          description: Block storage volume data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Block storage volume not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteBlockStorageVolume
+      summary: Delete block storage volume
+      description: Delete block storage volume
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the block storage volume to delete
+      responses:
+        "200":
+          description: Block storage volume deleted
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/EmptyResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Block storage volume not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    BlockStorage:
+      description: Block storage volume
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            availabilityZone:
+              type: string
+              description: Availability zone of the block storage volume, if applicable
+            name:
+              type: string
+              description: Name of the block storage volume
+            sizeGb:
+              type: number
+              description: Size of the block storage volume, in gigabytes
+            status:
+              type: string
+              description: Status of the block storage volume
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the block storage volume
+            description:
+              type: string
+              description: Description of the block storage volume
+          required:
+            - sizeGb
+    BlockStorageCreate:
+      type: object
+      description: Request to create a new block storage volume
+      properties:
+        regionUid:
+          type: string
+          description: Region identifier where the volume will be created
+        availabilityZone:
+          type: string
+          description: Availability zone where the volume will be created, if applicable
+        sizeGb:
+          type: number
+          description: Size of the block storage volume, in gigabytes
+        name:
+          type: string
+          description: Name of the block storage volume
+        description:
+          type: string
+          description: Description of the block storage volume
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for the block storage volume
+      required:
+        - regionUid
+        - sizeGb

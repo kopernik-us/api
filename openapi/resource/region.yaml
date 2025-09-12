@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Region API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/region
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listRegions
+      summary: List regions
+      description: List regions for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of regions, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of regions to fetch
+      responses:
+        "200":
+          description: Regions data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getRegion
+      summary: Get region data
+      description: Get region data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the region
+      responses:
+        "200":
+          description: Region data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Region not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Region:
+      description: Region
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the region
+            country:
+              type: string
+              description: Country of the region
+            geoRegion:
+              type: string
+              description: Geo region of the region
+            availabilityZones:
+              type: array
+              items:
+                type: string
+              description:
+                Availability zones of the region, if supported; for performance reasons this field is only populated for
+                single region queries, and may be not present for list queries
+            capabilities:
+              description: Capabilities of the region
+              type: object
+              properties:
+                available:
+                  type: boolean
+                  description: Whether the region is available for new resources
+                supportedServices:
+                  description: Supported services in the region
+                  type: array
+                  items:
+                    $ref: "../resource.yaml#/components/schemas/ResourceType"
+          required:
+            - name
+            - country
+            - geoRegion
+            - capabilities

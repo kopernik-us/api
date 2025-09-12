@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: Kopernik.us Image API specification
+  version: 0.1.0
+servers:
+  - url: https://api.kopernik.us/v0/resource/image
+    description: Kopernik.us API server
+paths:
+  /{providerUid}:
+    get:
+      operationId: listImages
+      summary: List images
+      description: List images for the specified provider
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - os-distribution
+          description: Type of images to list. If set to "os-distribution", returns only OS distribution images
+        - name: nextToken
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Token for the next page of images, if there are more items to fetch
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of images to fetch
+      responses:
+        "200":
+          description: Images data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/PagedResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+  /{providerUid}/{resourceUid}:
+    get:
+      operationId: getImage
+      summary: Get image data
+      description: Get image data
+      parameters:
+        - name: providerUid
+          in: path
+          required: true
+          schema:
+            $ref: "../rest.yaml#/components/schemas/ProviderId"
+          description: Unique identifier of the provider
+        - name: resourceUid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the image
+      responses:
+        "200":
+          description: Image data
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ResourceResponse"
+        "400":
+          description: Argument validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: Image not found
+          content:
+            application/json:
+              schema:
+                $ref: "../rest.yaml#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Image:
+      description: Image
+      allOf:
+        - $ref: "../resource.yaml#/components/schemas/Resource"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the image
+            distribution:
+              type: string
+              description: OS distribution of the image
+            architecture:
+              type: string
+              description: Architecture of the image
+            description:
+              type: string
+              description: Description of the image
+            vendor:
+              type: string
+              description: Vendor of the image
+            createdAt:
+              type: number
+              description: Creation time of the image, in seconds since epoch
+            supportedRegions:
+              description: For regional images, the regions where the image is supported
+              type: array
+              items:
+                type: string
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags of the image
+          required:
+            - name
+            - distribution
+            - architecture
